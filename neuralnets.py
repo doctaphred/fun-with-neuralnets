@@ -10,16 +10,40 @@ def decode(number, base):
     output[number] = 1
     return output
 
+def deltaRule(input, output, target, learningRate):
+    '''Return the amounts to update the weights for one step of gradient descent.
+
+    dw_ij = a * (t_j - y_j) * g_prime(h_j) * x_i
+    where
+        a = learning rate
+        t_j = target output
+        y_j = actual output
+        g_prime = derivative of activation function
+        h_j = weighted sum of inputs (g_prime(h_j) = 1 for perceptrons)
+        x_i = ith input
+
+    Args:
+        input (n-length array): input to evaluate.
+        output, target (m-length arrays): actual and desired outputs.
+
+    Returns:
+        an nxm array.
+    '''
+    return np.outer(input, target - output) * learningRate
+
+def errors(outputs, targets):
+    return (abs(output - target for output, target in zip(outputs, targets)))
+
+
 class NeuralNet:
     '''Single-layer neural network.
 
     Attributes:
         weights (nxm array): n inputs, m outputs
-        learningRate
     '''
 
-    def __init__(self, weights, learningRate):
-        self.weights, self.learningRate = weights, learningRate
+    def __init__(self, weights):
+        self.weights = weights
 
     def evaluate(self, input):
         '''
@@ -28,40 +52,17 @@ class NeuralNet:
         '''
         return np.dot(self.weights.T, input)
 
-    def weightUpdates(self, input, output, target):
-        '''Return the amounts to update the weights.
-
-        Args:
-            input (n-length array): input to evaluate.
-            output, target (m-length arrays): actual and desired outputs.
-
-        Returns:
-            an nxm array.
-        '''
-        return np.outer(input, target - output)
-
-    def gradientDescentStep(self, input, target):
-        updates = self.weightUpdates(input, self.evaluate(input), target)
-        self.weights += updates * self.learningRate
-
-    def updateWeights(self, input, target):
-        '''
-        dw_ij = a * (t_j - y_j) * g_(h_j) * x_i
-        where
-            a = learning rate
-            t_j = target output
-            y_j = actual output
-            g_ = derivative of activation function
-            h_j = weighted sum of inputs (g_(h_j) = 1 for perceptrons)
-            x_i = ith input
-        '''
-        # TODO: ???
-        self.weights += np.outer(input, target - output) * self.learningRate
+    def updateWeights(self, input, target, learningRate):
+        self.weights += deltaRule(input, self.evaluate(input), target, learningRate)
 
     def averageError(self, inputs, targets):
         return sum(sum(abs(self.evaluate(i) - t)) for i, t in zip(inputs, targets)) / len(inputs)
 
-    def gradientDescent(self, inputs, targets, convergenceThreshold):
+    # def errors(self, inputs, targets):
+    #     # return (abs(self.evaluate(i) - t) for i, t in zip(inputs, targets))
+    #     return errors((self.evaluate(i) for i in inputs), targets)
+
+    def gradientDescent(self, inputs, targets, learningRate, convergenceThreshold):
         # If initial error is less than the convergence threshold, you've
         # already converged, so initialize prevError to 0.
         prevError = 0
@@ -73,31 +74,44 @@ class NeuralNet:
             prevError = error
 
             for input, target in zip(inputs, targets):
-                self.gradientDescentStep(input, target)
+                self.updateWeights(input, target, learningRate)
 
 
-if __name__ == '__main__':
-
-    datapath_training = '/Users/frederick/Dropbox/data/handwriting/optdigits_100.tra'
-
+def loadData(filepath):
     inputs = []
     targets = []
-    with open(datapath_training) as f:
+    with open(filepath) as f:
         for line in f:
             numbers = [int(n) for n in line.strip().split(',')]
             inputs.append(np.array([1] + numbers[:-1]))
             targets.append(np.array(decode(numbers[-1], base=10)))
+    return inputs, targets
 
-    ann = NeuralNet(weights=randomWeights(64, 10), learningRate=0.00001)
 
-    def train(threshold=0.0001):
-        ann.gradientDescent(inputs, targets, convergenceThreshold=threshold)
+if __name__ == '__main__':
 
-    def eval(number=0):
-        return ann.evaluate(inputs[number])
+    path_train_100 = '/Users/frederick/Dropbox/data/handwriting/optdigits_100.tra'
+    path_train = '/Users/frederick/Dropbox/data/handwriting/optdigits.tra'
+    path_test = '/Users/frederick/Dropbox/data/handwriting/optdigits.tes'
 
-    def check(number=0):
-        return ann.evaluate(inputs[number]).argmax() == targets[number].argmax()
+    inputs_train_100, targets_train_100 = loadData(path_train_100)
+    inputs_train, targets_train = loadData(path_train)
+    inputs_test, targets_test = loadData(path_test)
 
-    def checkall():
-        return sum(check(number) for number in range(len(inputs)))
+    ann = NeuralNet(weights=randomWeights(64, 10))
+
+    def train(inputs=inputs_train, targets=targets_train, learningRate=0.00001, convergenceThreshold=0.00001):
+        ann.gradientDescent(inputs, targets, learningRate, convergenceThreshold)
+
+    def test(inputs=inputs_test, targets=targets_test):
+        score = numCorrect(inputs, targets)
+        num = len(inputs)
+        print('{} of {} inputs correctly evaluated ({:0.3f})%.'.format(
+                score, num, score / num * 100))
+
+    def check(input, target):
+        '''Check if the output and target's max value's indices are the same.'''
+        return ann.evaluate(input).argmax() == target.argmax()
+
+    def numCorrect(inputs, targets):
+        return sum(check(input, target) for input, target in zip(inputs, targets))
