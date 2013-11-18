@@ -90,11 +90,9 @@ def loadData(filepath):
 
 if __name__ == '__main__':
 
-    path_train_100 = '/Users/frederick/Dropbox/data/handwriting/optdigits_100.tra'
-    path_train = '/Users/frederick/Dropbox/data/handwriting/optdigits.tra'
-    path_test = '/Users/frederick/Dropbox/data/handwriting/optdigits.tes'
+    path_train = 'handwriting data/optdigits.tra'
+    path_test = 'handwriting data/optdigits.tes'
 
-    inputs_train_100, targets_train_100 = loadData(path_train_100)
     inputs_train, targets_train = loadData(path_train)
     inputs_test, targets_test = loadData(path_test)
 
