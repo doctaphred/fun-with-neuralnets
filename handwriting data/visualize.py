@@ -9,6 +9,7 @@ def numLines(filepath):
     with open(filepath) as f:
         return sum(1 for line in f)
 
+
 def readData(filepath):
     '''
     Yields:
@@ -19,6 +20,7 @@ def readData(filepath):
             numbers = [int(n) for n in line.strip().split(',')]
             yield numbers[:-1], numbers[-1]
 
+
 def getImage(input):
     # Invert and scale data from 0-255 for 8-bit grayscale.
     # Invert so it looks like black markings on a white background.
@@ -27,12 +29,12 @@ def getImage(input):
     bitmap.resize(8, 8)
     return Image.fromarray(bitmap)
 
+
 def makeImages(datapath, imgdir):
     outputdir = os.path.join(imgdir, os.path.basename(datapath))
     os.makedirs(outputdir, exist_ok=True)
-    numData = numLines(datapath)
-    # Calculate the number of digits in a zero-padded one-indexed serial ID.
-    ID_len = len(str(numData)) # int(math.log10(numdata))+1? Pshh.
+    # Find the number of digits required for zero-padded one-indexed serial IDs.
+    ID_len = len(str(numLines(datapath))) # int(math.log10(numdata))+1? Pshh.
     for index, (input, label) in enumerate(readData(datapath)):
         ID = index + 1
         # str.format(**locals()) is dirty, but it's fine here.
