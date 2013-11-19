@@ -1,14 +1,22 @@
-import numpy as np
 import random
+
+import numpy as np
 
 
 def randomWeights(numInputs, numOutputs):
+    '''Return a (numInputs + 1) x numOutputs array of small random numbers.
+
+    numInputs should not include the bias input.
+    '''
     return np.random.random((numInputs + 1, numOutputs)) / 1000
 
+
 def decode(number, base):
+    '''Return a <base>-length array of zeros, with a 1 at index <number>.'''
     output = np.zeros(base)
     output[number] = 1
     return output
+
 
 def deltaRule(input, output, target, learningRate):
     '''Return the amounts to update the weights for one step of gradient descent.
@@ -31,6 +39,7 @@ def deltaRule(input, output, target, learningRate):
     '''
     return np.outer(input, target - output) * learningRate
 
+
 def errors(outputs, targets):
     return (abs(output - target for output, target in zip(outputs, targets)))
 
@@ -48,44 +57,90 @@ class NeuralNet:
     def evaluate(self, input):
         '''
         Args: input (n-length array)
-        Returns: an n-length array.
+        Returns: an m-length array.
         '''
         return np.dot(self.weights.T, input)
 
     def updateWeights(self, input, target, learningRate):
         self.weights += deltaRule(input, self.evaluate(input), target, learningRate)
 
-    def averageError(self, inputs, targets):
-        return sum(sum(abs(self.evaluate(i) - t)) for i, t in zip(inputs, targets)) / len(inputs)
+    def totalError(self, input, target):
+        '''Calculate the total error over the output nodes for the given input.
 
-    # def errors(self, inputs, targets):
-    #     # return (abs(self.evaluate(i) - t) for i, t in zip(inputs, targets))
-    #     return errors((self.evaluate(i) for i in inputs), targets)
+        Args:
+            input (n-length array)
+            target (m-length array)
 
-    def gradientDescent(self, inputs, targets, learningRate, convergenceThreshold):
-        # If initial error is less than the convergence threshold, you've
-        # already converged, so initialize prevError to 0.
+        Returns:
+            The sum of the absolute differences between each output node and
+            the corresponding target output value.
+        '''
+        # Note that the builtin abs works just fine on numpy arrays.
+        return sum(abs(self.evaluate(input) - target))
+
+    def averageError(self, data):
+        '''Calculate the average error in the NeuralNet's evaluation of the
+        given data.
+
+        Args:
+            data (i-length sequence of (n-length array, m-length array)):
+                The input data to be evaluated and target outputs.
+
+        Returns:
+            The average difference of the NeuralNet's outputs from the target
+            outputs.
+        '''
+        return sum(self.totalError(*datum) for datum in data) / len(data)
+
+    # def errorChange(self, data):
+    #     prevError = 0
+    #     while True:
+    #         error = self.averageError(data)
+    #         yield error
+    #         prevError = error
+
+    def gradientDescent(self, data, learningRate, convergenceThreshold):
+        '''Train the NeuralNet using gradient descent on the given data.
+
+        Continue training on all the data until the change in error between
+        training rounds is less than convergenceThreshold.
+
+        Args:
+            data (i-length sequence of (n-length input array, m-length target array))
+            learningRate (0 < value < 1)
+            convergenceThreshold
+        '''
+        # Loop until the change in error is less than convergenceThreshold.
         prevError = 0
         while True:
-            error = self.averageError(inputs, targets)
-            print(error)
+            error = self.averageError(data)
             if abs(error - prevError) < convergenceThreshold:
                 break
             prevError = error
 
-            for input, target in zip(inputs, targets):
+            for input, target in data:
                 self.updateWeights(input, target, learningRate)
 
 
-def loadData(filepath):
-    inputs = []
-    targets = []
+def readData(filepath):
+    '''
+    Yields:
+        (data, label)
+    '''
     with open(filepath) as f:
         for line in f:
             numbers = [int(n) for n in line.strip().split(',')]
-            inputs.append(np.array([1] + numbers[:-1]))
-            targets.append(np.array(decode(numbers[-1], base=10)))
-    return inputs, targets
+            yield numbers[:-1], numbers[-1]
+
+def translate(input, label):
+    '''
+    Args:
+        input ((n-1)-length sequence)
+        label: classification of the input.
+    Returns:
+        n-length biased input array, m-length array representation of label.
+    '''
+    return np.array([1] + input), decode(label, base=10)
 
 
 if __name__ == '__main__':
@@ -93,17 +148,21 @@ if __name__ == '__main__':
     path_train = 'handwriting data/optdigits.tra'
     path_test = 'handwriting data/optdigits.tes'
 
-    inputs_train, targets_train = loadData(path_train)
-    inputs_test, targets_test = loadData(path_test)
+    data_train = [translate(*datum) for datum in readData(path_train)]
+    data_test = [translate(*datum) for datum in readData(path_test)]
 
     ann = NeuralNet(weights=randomWeights(64, 10))
 
-    def train(inputs=inputs_train, targets=targets_train, learningRate=0.00001, convergenceThreshold=0.00001):
+    # TODO: Should data be lists of (input, target), or seperate lists of inputs and targets?
+    # (Also, what kind of overhead is involved in each approach?)
+
+    def train(data=data_train, learningRate=0.00001, convergenceThreshold=0.00001):
+        inputs, targets = zip(*data)
         ann.gradientDescent(inputs, targets, learningRate, convergenceThreshold)
 
-    def test(inputs=inputs_test, targets=targets_test):
-        score = numCorrect(inputs, targets)
-        num = len(inputs)
+    def test(data=data_test):
+        score = numCorrect(data)
+        num = len(data)
         print('{} of {} inputs correctly evaluated ({:0.3f})%.'.format(
                 score, num, score / num * 100))
 
@@ -111,5 +170,5 @@ if __name__ == '__main__':
         '''Check if the output and target's max value's indices are the same.'''
         return ann.evaluate(input).argmax() == target.argmax()
 
-    def numCorrect(inputs, targets):
-        return sum(check(input, target) for input, target in zip(inputs, targets))
+    def numCorrect(data=data_test):
+        return sum(check(input, target) for input, target in data)
