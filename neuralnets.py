@@ -19,7 +19,7 @@ def decode(number, base):
 
 
 def deltaRule(input, output, target, learningRate):
-    '''Return the amounts to update the weights for one step of gradient descent.
+    '''Return the weight updates for one step of gradient descent.
 
     dw_ij = a * (t_j - y_j) * g_prime(h_j) * x_i
     where
@@ -106,7 +106,8 @@ class NeuralNet:
         training rounds is less than convergenceThreshold.
 
         Args:
-            data (i-length sequence of (n-length input array, m-length target array))
+            data (i-length sequence of pairs:
+                (n-length input array, m-length target array))
             learningRate (0 < value < 1)
             convergenceThreshold
         '''
@@ -131,6 +132,7 @@ def readData(filepath):
         for line in f:
             numbers = [int(n) for n in line.strip().split(',')]
             yield numbers[:-1], numbers[-1]
+
 
 def translate(input, label):
     '''
@@ -167,7 +169,7 @@ if __name__ == '__main__':
                 score, num, score / num * 100))
 
     def check(input, target):
-        '''Check if the output and target's max value's indices are the same.'''
+        '''Check if the output and target evaluate to the same label.'''
         return ann.evaluate(input).argmax() == target.argmax()
 
     def numCorrect(data=data_test):
