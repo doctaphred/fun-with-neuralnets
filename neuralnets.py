@@ -63,8 +63,13 @@ class NeuralNet:
         return np.dot(self.weights.T, input)
 
     def updateWeights(self, input, target, learningRate):
+<<<<<<< HEAD
         self.numUpdates += 1
         self.weights += deltaRule(input, self.evaluate(input), target, learningRate)
+=======
+        self.weights += deltaRule(input, self.evaluate(input), target,
+                                  learningRate)
+>>>>>>> master
 
     def totalError(self, input, target):
         '''Calculate the total error over the output nodes for the given input.
@@ -108,8 +113,13 @@ class NeuralNet:
         training rounds is less than convergenceThreshold.
 
         Args:
+<<<<<<< HEAD
             data (i-length sequence of pairs:
                 (n-length input array, m-length target array))
+=======
+            data (i-length sequence of (n-length input array, m-length target
+                array))
+>>>>>>> master
             learningRate (0 < value < 1)
             convergenceThreshold
         '''
@@ -170,12 +180,26 @@ if __name__ == '__main__':
     data_train = [translate(*datum) for datum in readData(path_train)]
     data_test = [translate(*datum) for datum in readData(path_test)]
 
+<<<<<<< HEAD
     ann = Classifier(weights=randomWeights(64, 10))
 
     def train(neuralnet=None, data=data_train, learningRate=0.00001, convergenceThreshold=0.00001):
         if neuralnet is None:
             neuralnet = ann
         neuralnet.gradientDescent(data, learningRate, convergenceThreshold)
+=======
+    ann = NeuralNet(weights=randomWeights(64, 10))
+
+    # TODO: Should data be lists of (input, target), or seperate lists of
+    # inputs and targets?
+    # (Also, what kind of overhead is involved in each approach?)
+
+    def train(data=data_train, learningRate=0.00001,
+              convergenceThreshold=0.00001):
+        inputs, targets = zip(*data)
+        ann.gradientDescent(inputs, targets, learningRate,
+                            convergenceThreshold)
+>>>>>>> master
 
     def test(classifier=None, data=data_test):
         if classifier is None:
@@ -183,4 +207,15 @@ if __name__ == '__main__':
         score = classifier.numCorrect(data)
         num = len(data)
         print('{} of {} inputs correctly evaluated ({:0.3f})%.'.format(
+<<<<<<< HEAD
                 score, num, score / num * 100))
+=======
+              score, num, score / num * 100))
+
+    def check(input, target):
+        '''Check if the output and target's max value's indices are the same.'''
+        return ann.evaluate(input).argmax() == target.argmax()
+
+    def numCorrect(data=data_test):
+        return sum(check(input, target) for input, target in data)
+>>>>>>> master
