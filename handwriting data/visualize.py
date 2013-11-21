@@ -33,8 +33,8 @@ def getImage(input):
 def makeImages(datapath, imgdir):
     outputdir = os.path.join(imgdir, os.path.basename(datapath))
     os.makedirs(outputdir, exist_ok=True)
-    # Find the number of digits required for zero-padded one-indexed serial IDs.
-    ID_len = len(str(numLines(datapath))) # int(math.log10(numdata))+1? Pshh.
+    # Find the number of digits for zero-padded one-indexed serial IDs.
+    ID_len = len(str(numLines(datapath)))  # int(math.log10(numdata))+1? Pshh.
     for index, (input, label) in enumerate(readData(datapath)):
         ID = index + 1
         # str.format(**locals()) is dirty, but it's fine here.
