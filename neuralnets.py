@@ -19,7 +19,7 @@ def decode(number, base):
 
 
 def deltaRule(input, output, target, learningRate):
-    '''Return the weight updates for one step of gradient descent.
+    '''Return the amounts to update the weights for one step of gradient descent.
 
     dw_ij = a * (t_j - y_j) * g_prime(h_j) * x_i
     where
@@ -53,7 +53,6 @@ class NeuralNet:
 
     def __init__(self, weights):
         self.weights = weights
-        self.numUpdates = 0
 
     def evaluate(self, input):
         '''
@@ -63,13 +62,7 @@ class NeuralNet:
         return np.dot(self.weights.T, input)
 
     def updateWeights(self, input, target, learningRate):
-<<<<<<< HEAD
-        self.numUpdates += 1
         self.weights += deltaRule(input, self.evaluate(input), target, learningRate)
-=======
-        self.weights += deltaRule(input, self.evaluate(input), target,
-                                  learningRate)
->>>>>>> master
 
     def totalError(self, input, target):
         '''Calculate the total error over the output nodes for the given input.
@@ -113,13 +106,7 @@ class NeuralNet:
         training rounds is less than convergenceThreshold.
 
         Args:
-<<<<<<< HEAD
-            data (i-length sequence of pairs:
-                (n-length input array, m-length target array))
-=======
-            data (i-length sequence of (n-length input array, m-length target
-                array))
->>>>>>> master
+            data (i-length sequence of (n-length input array, m-length target array))
             learningRate (0 < value < 1)
             convergenceThreshold
         '''
@@ -127,23 +114,12 @@ class NeuralNet:
         prevError = 0
         while True:
             error = self.averageError(data)
-            print(error)
             if abs(error - prevError) < convergenceThreshold:
                 break
             prevError = error
 
             for input, target in data:
                 self.updateWeights(input, target, learningRate)
-
-
-class Classifier(NeuralNet):
-
-    def check(self, input, target):
-        '''Check if the output and target evaluate to the same label.'''
-        return self.evaluate(input).argmax() == target.argmax()
-
-    def numCorrect(self, data):
-        return sum(self.check(input, target) for input, target in data)
 
 
 def readData(filepath):
@@ -156,7 +132,6 @@ def readData(filepath):
             numbers = [int(n) for n in line.strip().split(',')]
             yield numbers[:-1], numbers[-1]
 
-
 def translate(input, label):
     '''
     Args:
@@ -168,10 +143,6 @@ def translate(input, label):
     return np.array([1] + input), decode(label, base=10)
 
 
-def translateAll(data):
-    yield from (translate(*datum) for datum in data)
-
-
 if __name__ == '__main__':
 
     path_train = 'handwriting data/optdigits.tra'
@@ -180,37 +151,20 @@ if __name__ == '__main__':
     data_train = [translate(*datum) for datum in readData(path_train)]
     data_test = [translate(*datum) for datum in readData(path_test)]
 
-<<<<<<< HEAD
-    ann = Classifier(weights=randomWeights(64, 10))
-
-    def train(neuralnet=None, data=data_train, learningRate=0.00001, convergenceThreshold=0.00001):
-        if neuralnet is None:
-            neuralnet = ann
-        neuralnet.gradientDescent(data, learningRate, convergenceThreshold)
-=======
     ann = NeuralNet(weights=randomWeights(64, 10))
 
-    # TODO: Should data be lists of (input, target), or seperate lists of
-    # inputs and targets?
+    # TODO: Should data be lists of (input, target), or seperate lists of inputs and targets?
     # (Also, what kind of overhead is involved in each approach?)
 
-    def train(data=data_train, learningRate=0.00001,
-              convergenceThreshold=0.00001):
+    def train(data=data_train, learningRate=0.00001, convergenceThreshold=0.00001):
         inputs, targets = zip(*data)
-        ann.gradientDescent(inputs, targets, learningRate,
-                            convergenceThreshold)
->>>>>>> master
+        ann.gradientDescent(inputs, targets, learningRate, convergenceThreshold)
 
-    def test(classifier=None, data=data_test):
-        if classifier is None:
-            classifier = ann
-        score = classifier.numCorrect(data)
+    def test(data=data_test):
+        score = numCorrect(data)
         num = len(data)
         print('{} of {} inputs correctly evaluated ({:0.3f})%.'.format(
-<<<<<<< HEAD
                 score, num, score / num * 100))
-=======
-              score, num, score / num * 100))
 
     def check(input, target):
         '''Check if the output and target's max value's indices are the same.'''
@@ -218,4 +172,3 @@ if __name__ == '__main__':
 
     def numCorrect(data=data_test):
         return sum(check(input, target) for input, target in data)
->>>>>>> master
