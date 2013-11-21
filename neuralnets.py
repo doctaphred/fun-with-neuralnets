@@ -127,35 +127,50 @@ class NeuralNet:
 
 
 class Classifier(NeuralNet):
+    '''Single-layer neural network classifier.'''
+
+    def label(self, input):
+        '''Return a label for the given input data.'''
+        return self.evaluate(input).argmax()
 
     def check(self, input, target):
         '''Check if the output and target evaluate to the same label.'''
         return self.evaluate(input).argmax() == target.argmax()
 
     def numCorrect(self, data):
+        '''Count the number of data the classifier correctly classifies.'''
         return sum(self.check(input, target) for input, target in data)
 
 
 def readData(filepath):
-    '''
+    '''Read the data at the given file path, one line at a time.
+
+    The data should be comma-seperated integer values, with the last number
+    representing the label for the line of data.
+
+    Args:
+        filepath: The path of the data file to be opened.
     Yields:
         (data, label)
     '''
+    # TODO: refactor into data-specific module.
     with open(filepath) as f:
         for line in f:
             numbers = [int(n) for n in line.strip().split(',')]
             yield numbers[:-1], numbers[-1]
 
 
-def translate(input, label):
-    '''
+def translate(data, label):
+    '''Translate the given data and label into biased input and taget output
+    arrays for a NeuralNet.
+
     Args:
-        input ((n-1)-length sequence)
-        label: classification of the input.
+        data ((n-1)-length sequence)
+        label: classification of the data.
     Returns:
         n-length biased input array, m-length array representation of label.
     '''
-    return np.array([1] + input), decode(label, base=10)
+    return np.array([1] + data), decode(label, base=10)
 
 
 def translateAll(data):
