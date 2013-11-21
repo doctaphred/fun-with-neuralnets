@@ -64,7 +64,8 @@ class NeuralNet:
 
     def updateWeights(self, input, target, learningRate):
         self.numUpdates += 1
-        self.weights += deltaRule(input, self.evaluate(input), target, learningRate)
+        self.weights += deltaRule(input, self.evaluate(input), target,
+                                  learningRate)
 
     def totalError(self, input, target):
         '''Calculate the total error over the output nodes for the given input.
@@ -108,8 +109,8 @@ class NeuralNet:
         training rounds is less than convergenceThreshold.
 
         Args:
-            data (i-length sequence of pairs:
-                (n-length input array, m-length target array))
+            data (i-length sequence of (n-length input array, m-length target
+                array))
             learningRate (0 < value < 1)
             convergenceThreshold
         '''
@@ -117,7 +118,6 @@ class NeuralNet:
         prevError = 0
         while True:
             error = self.averageError(data)
-            print(error)
             if abs(error - prevError) < convergenceThreshold:
                 break
             prevError = error
@@ -172,7 +172,8 @@ if __name__ == '__main__':
 
     ann = Classifier(weights=randomWeights(64, 10))
 
-    def train(neuralnet=None, data=data_train, learningRate=0.00001, convergenceThreshold=0.00001):
+    def train(neuralnet=None, data=data_train, learningRate=0.00001,
+              convergenceThreshold=0.00001):
         if neuralnet is None:
             neuralnet = ann
         neuralnet.gradientDescent(data, learningRate, convergenceThreshold)
@@ -183,4 +184,5 @@ if __name__ == '__main__':
         score = classifier.numCorrect(data)
         num = len(data)
         print('{} of {} inputs correctly evaluated ({:0.3f})%.'.format(
-                score, num, score / num * 100))
+              score, num, score / num * 100))
+
